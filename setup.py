@@ -13,8 +13,8 @@ try:
 except Exception:
     pass
 
-import filecache
-DOCUMENTATION = filecache.__doc__
+# import filecache
+# DOCUMENTATION = filecache.__doc__
 
 VERSION = '0.81'
 
@@ -22,11 +22,11 @@ SETUP_DICT = dict(
     name='filecache',
     packages=['filecache'],
     version=VERSION,
-    author='ubershmekel',
-    author_email='ubershmekel@gmail.com',
+    author='Ishan Gaur',
+    author_email='ishangaur4@gmail.com',
     url='https://github.com/ubershmekel/filecache',
     description='Persistent caching decorator',
-    long_description=DOCUMENTATION,
+    # long_description=DOCUMENTATION,
     long_description_content_type="text/markdown",
     classifiers=[
         'Development Status :: 4 - Beta',
@@ -37,8 +37,13 @@ SETUP_DICT = dict(
         'Programming Language :: Python :: 3',
         'Topic :: Utilities',
         'Topic :: Software Development :: Libraries :: Python Modules',
+    ],
+    install_requires=[
+        'python-dotenv',  # Add python-dotenv as a dependency
     ]
   )
+
+print("Dependencies:", SETUP_DICT['install_requires'])
 
 if CMD_CLASS:
     SETUP_DICT['cmdclass'] = CMD_CLASS
