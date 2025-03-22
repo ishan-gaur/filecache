@@ -79,12 +79,16 @@ FOREVER = None
 
 OPEN_DBS = dict()
 
-def _get_cache_name(function):
+def _get_cache_name(function, cache_dir=None):
     """
     returns a name for the module's cache db.
     """
     module_name = _inspect.getfile(function)
-    cache_name = module_name
+    if cache_dir is None:
+        cache_name = module_name
+    else:
+        cache_name = cache_dir
+        cache_name = _os.path.join(cache_name, _os.path.basename(module_name))
     
     # fix for '<string>' or '<stdin>' in exec or interpreter usage.
     cache_name = cache_name.replace('<', '_lt_')
@@ -122,7 +126,7 @@ def _args_key(function, args, kwargs):
     key = function.__name__ + arguments_pickle
     return key
 
-def filecache(seconds_of_validity=None, fail_silently=False):
+def filecache(seconds_of_validity=None, fail_silently=False, cache_dir=None):
     '''
     filecache is called and the decorator should be returned.
     '''
@@ -162,11 +166,20 @@ def filecache(seconds_of_validity=None, fail_silently=False):
 
         # make sure cache is loaded
         if not hasattr(function, '_db'):
-            cache_name = _get_cache_name(function)
+            cache_name = _get_cache_name(function, cache_dir)
             if cache_name in OPEN_DBS:
                 function._db = OPEN_DBS[cache_name]
             else:
-                function._db = _shelve.open(cache_name)
+                try:
+                    function._db = _shelve.open(cache_name)
+                except FileNotFoundError:
+                    parent_dir = _os.path.dirname(cache_name)
+                    if not _os.path.exists(parent_dir):
+                        _os.makedirs(parent_dir)
+                        print(f"FILECACHE: Created directory {parent_dir} for function {function.__name__}")
+                    else:
+                        raise
+                    function._db = _shelve.open(cache_name)
                 OPEN_DBS[cache_name] = function._db
                 atexit.register(function._db.close)
             
@@ -182,5 +195,20 @@ def filecache(seconds_of_validity=None, fail_silently=False):
     
     return filecache_decorator
 
+from pathlib import Path
+from dotenv import load_dotenv
+from typing import Union
+Pathlike = Union[str, Path]
+load_dotenv()
+def cache(f, cache_dir: Pathlike = None):
+	if _os.getenv("DEBUG") in ("True", "true"):
+		return f
+	try:
+		cache_dir = _os.getenv("CACHE_DIR")
+	except:
+		cache_dir = None
+
+	else:
+		return filecache(cache_dir=cache_dir)(f)
 
 
